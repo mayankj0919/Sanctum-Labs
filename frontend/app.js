@@ -214,15 +214,16 @@ document.addEventListener('DOMContentLoaded', () => {
         analysisResults.hidden = false;
         
         let html = `
-            <div style="margin-bottom: 24px;">
-                <p style="font-size: 13px; color: var(--color-outline); margin: 0;">
-                    ${result.rooms ? result.rooms.length : 0} structural zones identified.
-                </p>
+            <div class="results-header">
+                <span class="data-summary">${result.rooms ? result.rooms.length : 0} active zones</span>
             </div>
+            
+            <div class="data-section">
+                <h3 class="data-section-title">Rooms</h3>
         `;
         
         if (result.rooms && result.rooms.length > 0) {
-            result.rooms.forEach((room) => {
+            result.rooms.forEach((room, rIdx) => {
                 const roomId = room.id;
                 const roomScore = result.room_scores ? result.room_scores[roomId] : 0;
                 
@@ -231,11 +232,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 else if (roomScore >= 50) { rRisk = 'Medium'; rColor = '#FFB800'; }
                 else if (roomScore >= 30) { rRisk = 'Elevated'; rColor = '#FDE047'; }
                 
+                // Color indicator colors
+                const colors = ['#6c5ce7', '#00d2ff', '#00D9A5', '#FFB800', '#FF4757'];
+                const accent = colors[rIdx % colors.length];
+                
                 html += `
                     <div class="room-card">
                         <div class="room-header">
-                            <span class="room-name">${room.name}</span>
-                            <span class="risk-badge" style="background: ${rColor}20; color: ${rColor};">
+                            <div class="room-identity">
+                                <span class="room-indicator" style="background: ${accent};"></span>
+                                <span class="room-name">${room.name}</span>
+                            </div>
+                            <span class="risk-badge" style="color: ${rColor};">
                                 ${rRisk} Risk
                             </span>
                         </div>
@@ -243,9 +251,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const roomWalls = (result.results || []).filter(item => item.wall.room_id === roomId);
                 
-                if (roomWalls.length === 0) {
-                    html += `<p style="font-size: 12px; color: var(--color-outline);">No walls mapped.</p>`;
-                } else {
+                if (roomWalls.length > 0) {
+                    html += `<div class="walls-collection">`;
                     roomWalls.forEach((item, index) => {
                         const wall = item.wall;
                         const materialOptions = item.material_options || [];
@@ -262,37 +269,34 @@ document.addEventListener('DOMContentLoaded', () => {
                             
                             return `
                                 <div class="material-chip">
-                                    <div>
-                                        <span class="chip-rank" style="background: ${rankColor}; color: ${optIdx === 2 ? '#fff' : '#000'};">${rankClass}</span>
+                                    <div class="chip-main">
+                                        <span class="chip-rank" style="background: ${rankColor};">${rankClass}</span>
                                         <span class="chip-name" style="color: ${optIdx === 0 ? '#00D9A5' : 'white'};">${opt.name}</span>
                                     </div>
-                                    <span style="font-size: 10px; color: var(--color-outline);">${opt.tradeoff_score || '-'}</span>
+                                    <span class="chip-score">${opt.tradeoff_score || '-'}</span>
                                 </div>
                             `;
                         }).join('');
                         
                         html += `
-                            <div class="wall-item" style="border-left-color: ${riskColor}50;">
-                                <div class="wall-header">
-                                    <span class="wall-name">Wall ${wall.id || index + 1}</span>
-                                    <span class="wall-score">Score: ${score}</span>
+                            <div class="wall-interaction-item" style="border-left-color: ${riskColor}30;">
+                                <div class="wall-item-header">
+                                    <span class="wall-item-name">Wall ${wall.id || index + 1}</span>
+                                    <span class="wall-item-score">Score: ${score}</span>
                                 </div>
-                                
-                                <div style="margin-top: 8px;">
+                                <div class="material-options-list">
                                     ${optionsHtml}
                                 </div>
-                                
-                                <p class="wall-exp">${item.explanation}</p>
                             </div>
                         `;
                     });
+                    html += `</div>`;
                 }
                 html += `</div>`;
             });
-        } else {
-            html += `<p style="color: var(--color-outline);">No data available.</p>`;
         }
         
+        html += `</div>`; // Close data-section
         analysisResults.innerHTML = html;
     }
 

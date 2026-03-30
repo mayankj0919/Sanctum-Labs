@@ -7,6 +7,7 @@ LLM-powered dynamic explanations with cost-strength tradeoff analysis.
 
 import os
 import json
+import random
 
 try:
     from dotenv import load_dotenv
@@ -27,31 +28,22 @@ except ImportError:
     OPENAI_AVAILABLE = False
 
 
-SYSTEM_PROMPT = """You are a senior structural engineer explaining construction material choices.
-Provide clear, professional engineering justifications that focus on:
-1. Cost-strength tradeoff analysis
-2. Structural requirements (load-bearing vs partition)
-3. Span considerations
-4. Durability and long-term performance
+SYSTEM_PROMPT = """You are a senior structural engineer providing AI-powered insights for a construction project.
+For each wall, you must provide a structured analysis containing:
+1. BEST OPTION: A clear recommendation of the top material and why it's the optimal choice.
+2. FUTURE PROBLEMS: Predicted long-term risks (e.g., moisture, settlement, thermal expansion).
+3. SOLUTIONS: Maintenance steps or structural enhancements to mitigate those problems.
 
-Explain why the ranked materials were recommended in that order.
-Be concise but technically accurate."""
+Your response must be in valid JSON format only."""
 
 
-def explain(wall: dict, materials: list) -> str:
-    """Generate an engineering explanation for material recommendations.
-
-    Parameters
-    ----------
-    wall : dict
-        Wall properties (load_bearing, length, etc.)
-    materials : list
-        List of recommended materials with their scores (from materials.py)
+def explain(wall: dict, materials: list) -> dict:
+    """Generate structured AI insights for material recommendations.
 
     Returns
     -------
-    str
-        A professional structural-engineering justification
+    dict
+        A dictionary with 'recommendation', 'future_risks', and 'solutions'.
     """
     wall_type = "load-bearing" if wall.get("load_bearing", False) else "partition"
     length = wall.get("length", 0)
@@ -64,36 +56,29 @@ def explain(wall: dict, materials: list) -> str:
     try:
         return generate_llm_explanation(wall, materials)
     except Exception as e:
-        print(f"LLM explanation failed: {e}")
+        print(f"AI Insight generation failed: {e}")
         return get_fallback_explanation(wall, top_material)
 
 
-def generate_llm_explanation(wall: dict, materials: list) -> str:
-    """Use LLM to generate dynamic explanation."""
+def generate_llm_explanation(wall: dict, materials: list) -> dict:
+    """Use LLM to generate structured AI insights."""
     wall_type = "load-bearing" if wall.get("load_bearing", False) else "partition"
     length = wall.get("length", 0)
     
     materials_info = "\n".join([
-        f"{i+1}. {m['name']} - Cost: {m['cost']}, Strength: {m['strength']}, "
-        f"Durability: {m['durability']}, Tradeoff Score: {m['tradeoff_score']}"
-        for i, m in enumerate(materials)
+        f"{m['name']} (Tradeoff Score: {m['tradeoff_score']})"
+        for m in materials[:3]
     ])
     
-    user_prompt = f"""Generate a professional engineering explanation for material selection.
+    user_prompt = f"""Generate structural insights for a {wall_type} wall (Span: {length}m).
+Materials: {materials_info}
 
-Wall Properties:
-- Type: {wall_type}
-- Length/Span: {length}m
-- Load-bearing: {wall.get('load_bearing', False)}
-
-Ranked Material Options:
-{materials_info}
-
-Requirements:
-1. Explain why the top recommendation is best for this specific wall
-2. Compare the top 2-3 options in terms of cost vs strength tradeoff
-3. Mention any structural concerns
-4. Keep it concise (2-3 sentences)"""
+Respond with a JSON object:
+{{
+  "recommendation": "Explain the best choice and why...",
+  "future_risks": "Predict 1-2 long-term issues...",
+  "solutions": "Provide maintenance or engineering fixes..."
+}}"""
     
     api_key = os.environ.get("GEMINI_API_KEY")
     if api_key:
@@ -101,9 +86,10 @@ Requirements:
             client = genai.Client(api_key=api_key)
             response = client.models.generate_content(
                 model='gemini-2.0-flash',
-                contents=user_prompt
+                contents=user_prompt,
+                config={'response_mime_type': 'application/json'}
             )
-            return response.text.strip()
+            return json.loads(response.text.strip())
         except Exception as e:
             print(f"Gemini API error: {e}")
     
@@ -124,37 +110,76 @@ Requirements:
     raise ValueError("No LLM API key available")
 
 
-def get_fallback_explanation(wall: dict, material: str) -> str:
-    """Generate explanation without LLM (rule-based fallback)."""
+def get_fallback_explanation(wall: dict, material: str) -> dict:
+    """Generate dynamic, randomized structural insights without LLM."""
     wall_type = "load-bearing" if wall.get("load_bearing", False) else "partition"
     length = wall.get("length", 0)
     
-    if material == "RCC" and length > 5:
-        return (
-            f"This {wall_type} wall spans {length}m and carries structural load. "
-            f"RCC provides the compressive strength to bear upper-floor loads across a {length}m span. "
-            f"Red brick would risk cracking under sustained axial stress at this length."
-        )
+    # 1. RECOMMENDATION POOL
+    recs = {
+        "RCC": [
+            f"RCC is designated for this {wall_type} wall to handle compressive stress across its {length}m span.",
+            f"Given the load requirements, RCC provides the necessary structural rigidity to prevent axial failure.",
+            f"High-density RCC ensures stability and load transfer for this primary {wall_type} element."
+        ],
+        "Steel Frame": [
+            f"Steel framing offers the required lateral stability for this {length}m span.",
+            "A structural steel frame allows for rapid construction without compromising structural integrity.",
+            f"Lightweight but high-strength steel is optimal for this custom {wall_type} configuration."
+        ],
+        "DEFAULT": [
+            f"{material} is the most balanced choice for this {wall_type} wall.",
+            f"Standard {material} masonry is cost-effective for this span length.",
+            f"Selected {material} provides adequate durability for this interior {wall_type} segment."
+        ]
+    }
     
-    if material == "RCC":
-        return (
-            f"This {wall_type} wall is designated as load-bearing. "
-            f"RCC is required to safely transfer compressive loads from the structure above. "
-            f"Brick masonry lacks the tensile reinforcement needed for load-bearing applications."
-        )
+    # 2. FUTURE RISKS POOL
+    risks = {
+        "RCC": [
+            "Micro-cracking due to long-term concrete shrinkage.",
+            "Potential carbonation of concrete reducing rebar protection.",
+            "Seismic shear stress at the wall-to-ceiling interface."
+        ],
+        "Steel Frame": [
+            "Oxidation of fasteners in high-humidity conditions.",
+            "Localized thermal bridging causing surface condensation.",
+            "Minor vibration transmission across the large span."
+        ],
+        "DEFAULT": [
+            "Hairline cracks in plaster due to seasonal thermal expansion.",
+            "Moisture ingress if the damp-proof course is compromised.",
+            "Erosion of mortar joints over a 15-20 year period."
+        ]
+    }
     
-    if material == "Steel Frame":
-        return (
-            f"This {wall_type} wall spans {length}m, exceeding standard masonry limits. "
-            f"A steel frame provides the rigidity and lateral stability needed for large-span partitions. "
-            f"Red brick alone would require additional intermediate supports."
-        )
+    # 3. SOLUTIONS POOL
+    solns = {
+        "RCC": [
+            "Apply high-grade waterproof coatings and monitor for settlement.",
+            "Inject epoxy resin into any visible hairline cracks annually.",
+            "Add fiber-reinforced plaster to improve surface tensile strength."
+        ],
+        "Steel Frame": [
+            "Regular inspection of anti-rust coatings and joint integrity.",
+            "Install high-density acoustic insulation within the frame cavity.",
+            "Apply intumescent fire-redundant paint for enhanced safety."
+        ],
+        "DEFAULT": [
+            "Use breathable masonry primer before final painting.",
+            "Ensure expansion joints are placed every 6 meters to prevent cracking.",
+            "Perform periodic repointing of masonry joints every decade."
+        ]
+    }
     
-    return (
-        f"This {wall_type} wall spans {length}m — within standard masonry limits. "
-        f"{material} is the most cost-effective choice for this application. "
-        f"It offers good balance of strength, durability, and economy."
-    )
+    # Dynamic Selection
+    mat_key = material if material in recs else "DEFAULT"
+    
+    return {
+        "recommendation": random.choice(recs[mat_key]),
+        "future_risks": random.choice(risks[mat_key]),
+        "solutions": random.choice(solns[mat_key])
+    }
 
 
 def explain_single(wall: dict, material: str) -> str:

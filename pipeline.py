@@ -102,7 +102,7 @@ def run_pipeline(
         
         top_material = material_options[0]["name"] if material_options else "Red Brick"
         
-        explanation = generate_explanation(adapted, material_options)
+        ai_insight = generate_explanation(adapted, material_options)
         
         risk_score = calculate_risk_score(adapted, top_material)
         
@@ -110,7 +110,7 @@ def run_pipeline(
             "wall": wall,
             "material": top_material,
             "material_options": material_options,
-            "explanation": explanation,
+            "ai_insight": ai_insight,
             "risk_score": risk_score,
         })
         
@@ -185,14 +185,14 @@ def generate_phases_stream(data_dict: dict):
         
         material_options = recommend_material(adapted)
         top_material = material_options[0]["name"] if material_options else "Red Brick"
-        explanation = generate_explanation(adapted, material_options)
+        ai_insight = generate_explanation(adapted, material_options)
         risk_score = calculate_risk_score(adapted, top_material)
         
         results.append({
             "wall": wall,
             "material": top_material,
             "material_options": material_options,
-            "explanation": explanation,
+            "ai_insight": ai_insight,
             "risk_score": risk_score,
         })
         

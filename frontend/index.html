@@ -195,6 +195,35 @@
         </div>
     </footer>
 
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <script src="app.js"></script>
+
+    <!-- Interactive Room Modal -->
+    <div id="room-modal" class="modal" hidden>
+        <div class="modal-backdrop" id="modal-backdrop"></div>
+        <div class="modal-container">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <span class="room-indicator-large" id="modal-room-indicator"></span>
+                    <div>
+                        <h2 id="modal-room-name" class="modal-title">Room Details</h2>
+                        <p id="modal-room-meta" class="modal-subtitle">Spatial Analysis</p>
+                    </div>
+                </div>
+                <button class="modal-close" id="modal-close-btn">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            
+            <div class="modal-body" id="modal-body">
+                <!-- Content injected dynamically -->
+            </div>
+            
+            <div class="modal-footer">
+                <div class="modal-risk-tag" id="modal-risk-tag">Low Risk</div>
+                <button class="btn btn-secondary" id="modal-dismiss-btn">Dismiss</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

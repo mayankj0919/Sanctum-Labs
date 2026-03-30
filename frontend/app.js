@@ -12,6 +12,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnToggleResults = document.getElementById('btn-toggle-results');
     const analysisPanel = document.getElementById('analysis-panel');
 
+    let lastFullResult = null; // Store for modal lookup
+
+    // UI Elements for Modal
+    const roomModal = document.getElementById('room-modal');
+    const modalBackdrop = document.getElementById('modal-backdrop');
+    const modalCloseBtn = document.getElementById('modal-close-btn');
+    const modalDismissBtn = document.getElementById('modal-dismiss-btn');
+    const modalBody = document.getElementById('modal-body');
+    const modalRoomName = document.getElementById('modal-room-name');
+    const modalRoomIndicator = document.getElementById('modal-room-indicator');
+    const modalRiskTag = document.getElementById('modal-risk-tag');
+
     // Toggle Analysis Panel
     btnToggleResults.addEventListener('click', () => {
         analysisPanel.classList.toggle('show');
@@ -143,6 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Analyze button - calls the backend API
     analyzeBtn.addEventListener('click', async () => {
+        lastFullResult = null;
         if (!currentInputType) {
             alert('Please upload an image or load JSON data first');
             return;
@@ -240,6 +253,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     renderPhase(phaseKey);
                 }
                 if (parsed.phase === 'final') {
+                    lastFullResult = parsed;
                     displayResults(parsed);
                 }
             }
@@ -393,6 +407,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             `;
                         }).join('');
                         
+                        const insight = item.ai_insight || {};
+                        
                         html += `
                             <div class="wall-interaction-item" style="border-left-color: ${riskColor}30;">
                                 <div class="wall-item-header">
@@ -401,6 +417,25 @@ document.addEventListener('DOMContentLoaded', () => {
                                 </div>
                                 <div class="material-options-list">
                                     ${optionsHtml}
+                                </div>
+                                
+                                <div class="ai-insight-box">
+                                    <div class="insight-label">
+                                        <span class="material-symbols-outlined insight-icon">psychology</span>
+                                        AI Structural Reasoning
+                                    </div>
+                                    <p class="insight-text recommendation">${insight.recommendation || 'Deep analysis in progress...'}</p>
+                                    
+                                    <div class="insight-meta">
+                                        <div class="meta-item">
+                                            <span class="meta-label">Predictive Risk:</span>
+                                            <span class="meta-value risk">${insight.future_risks || '-'}</span>
+                                        </div>
+                                        <div class="meta-item">
+                                            <span class="meta-label">Optimal Mitigation:</span>
+                                            <span class="meta-value solution">${insight.solutions || '-'}</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         `;
@@ -543,5 +578,85 @@ document.addEventListener('DOMContentLoaded', () => {
     btnAutoplay.addEventListener('click', () => {
         if (autoplayInterval) window.stopAutoplay();
         else startAutoplay();
+    });
+
+    // --- Modal Interaction Logic ---
+    function openRoomModal(roomName) {
+        if (!lastFullResult || !lastFullResult.rooms) return;
+        
+        const room = lastFullResult.rooms.find(r => r.name === roomName || r.name.startsWith(roomName));
+        if (!room) return;
+        
+        const roomId = room.id;
+        const roomScore = (lastFullResult.room_scores || {})[roomId] || 0;
+        const roomResults = (lastFullResult.results || []).filter(r => r.wall.room_id === roomId);
+        
+        // Setup Header
+        modalRoomName.textContent = room.name;
+        const colors = ['#6c5ce7', '#00d2ff', '#00D9A5', '#FFB800', '#FF4757'];
+        const rIdx = lastFullResult.rooms.indexOf(room);
+        modalRoomIndicator.style.background = colors[rIdx % colors.length];
+        
+        // Risk Tag
+        let rRisk = 'Low'; let rColor = '#00D9A5';
+        if (roomScore >= 80) { rRisk = 'High'; rColor = '#FF4757'; }
+        else if (roomScore >= 50) { rRisk = 'Medium'; rColor = '#FFB800'; }
+        else if (roomScore >= 30) { rRisk = 'Elevated'; rColor = '#FDE047'; }
+        
+        modalRiskTag.textContent = `${rRisk} Risk`;
+        modalRiskTag.style.color = rColor;
+        modalRiskTag.style.background = `${rColor}15`;
+
+        // Body Content
+        let html = `
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                <div class="stat-card" style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 12px;">
+                    <div style="font-size: 10px; color: var(--color-outline); text-transform: uppercase;">Area</div>
+                    <div style="font-size: 18px; font-weight: 700; color: white;">${(room.width * room.length).toFixed(1)} m²</div>
+                </div>
+                <div class="stat-card" style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 12px;">
+                    <div style="font-size: 10px; color: var(--color-outline); text-transform: uppercase;">Walls</div>
+                    <div style="font-size: 18px; font-weight: 700; color: white;">${roomResults.length} Units</div>
+                </div>
+            </div>
+            <div class="modal-section-title" style="font-size: 11px; font-weight: 700; color: var(--color-secondary); text-transform: uppercase; margin-bottom: 12px;">Structural Insights</div>
+        `;
+
+        roomResults.forEach((res, idx) => {
+            const insight = res.ai_insight || {};
+            html += `
+                <div style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <div style="font-size: 13px; font-weight: 600; color: white; margin-bottom: 8px;">Wall ${res.wall.id || idx + 1} Recommendation</div>
+                    <p style="font-size: 13px; color: var(--color-outline); line-height: 1.5; margin: 0;">${insight.recommendation || 'Standard masonry recommended.'}</p>
+                </div>
+            `;
+        });
+
+        modalBody.innerHTML = html;
+        roomModal.classList.add('show');
+        document.body.style.overflow = 'hidden'; // Lock scroll
+    }
+
+    function closeRoomModal() {
+        roomModal.classList.remove('show');
+        document.body.style.overflow = 'auto'; // Unlock scroll
+    }
+
+    modalCloseBtn.addEventListener('click', closeRoomModal);
+    modalDismissBtn.addEventListener('click', closeRoomModal);
+    modalBackdrop.addEventListener('click', closeRoomModal);
+
+    // Capture Plotly Click
+    plotlyViewer.on('plotly_click', (data) => {
+        // GATING: Only work after 3D generation/analysis is fully complete
+        if (!lastFullResult) return;
+
+        if (!data.points || data.points.length === 0) return;
+        const point = data.points[0];
+        
+        // PRECISION: Only trigger on actual structure (Room Mesh3d), ignore edges/axis/empty space
+        if (point.data && point.data.type === 'mesh3d' && point.data.name) {
+            openRoomModal(point.data.name);
+        }
     });
 });

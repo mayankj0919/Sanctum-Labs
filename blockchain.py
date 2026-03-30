@@ -1,4 +1,5 @@
 import subprocess
+import threading
 
 def store_hash_on_stellar(project_id: str, hash_val: str) -> dict:
     contract_id = "CDLIC3HMOLOBD5E3BZSKLENWZZ52LGUDW5YGFNWJHVAHZKK7XFIDHDDJ"
@@ -13,30 +14,53 @@ def store_hash_on_stellar(project_id: str, hash_val: str) -> dict:
     )
     
     try:
-        # Non-blocking async spawn
-        subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            shell=True
-        )
+        # Step 1: Use safe subprocess call
+        result = subprocess.run(cmd, capture_output=True, text=True, shell=True)
         
-        return {
-            "status": "pending",
-            "project_id": project_id,
-            "tx_hash": "processing_async",
-            "explorer_link": "https://stellar.expert/explorer/testnet",
-            "error": None
-        }
+        # Step 2: Sanitize result strings safely
+        raw_out = result.stdout or ""
+        raw_err = result.stderr or ""
+        clean_out = raw_out.encode("ascii", "ignore").decode().strip()
+        clean_err = raw_err.encode("ascii", "ignore").decode().strip()
+
+        # Step 3: Safe logging
+        try:
+            if result.returncode != 0:
+                print(f"--- Blockchain Error for {project_id} ---")
+                print(f"STDERR: {clean_err}")
+                print(f"STDOUT: {clean_out}")
+            else:
+                print(f"Blockchain Write Success: {project_id}")
+        except:
+            pass
+
+        if result.returncode == 0:
+            return {
+                "status": "success",
+                "project_id": project_id,
+                "tx_hash": "confirmed",
+                "explorer_link": "https://stellar.expert/explorer/testnet",
+                "error": None
+            }
+        else:
+            return {
+                "status": "failed",
+                "project_id": project_id,
+                "tx_hash": "",
+                "explorer_link": "https://stellar.expert/explorer/testnet",
+                "error": clean_err or clean_out
+            }
+
     except Exception as e:
-        # Step 1: Sanitize outputs and ensure emojis / special chars don't fail encoding
-        error_output = str(e).encode("ascii", "ignore").decode()
+        safe_exc = str(e).encode("ascii", "ignore").decode()
+        try:
+            print(f"System Error in Blockchain Module: {safe_exc}")
+        except: pass
         
         return {
             "status": "failed",
             "project_id": project_id,
             "tx_hash": "",
             "explorer_link": "https://stellar.expert/explorer/testnet",
-            "error": error_output
+            "error": safe_exc
         }

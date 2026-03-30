@@ -1,74 +1,75 @@
 # 🧠 SANCTUM AI — Structural Intelligence System
+> **"Engineering the Future: Automated Structural Analysis with Blockchain Integrity."**
 
-SANCTUM AI is an end-to-end structural analysis platform that transforms 2D floor plans into intelligent, material-optimized 3D models. It combines computer vision, engineering logic, and generative AI to provide clear, actionable construction insights.
+SANCTUM AI is a sophisticated, end-to-end platform that transforms 2D floor plans into intelligent, material-optimized 3D models. It leverages Computer Vision, Soroban Smart Contracts on Stellar, and Generative AI (LLMs) to provide real-time, actionable engineering insights.
 
 ---
 
-## 🚀 Key Features
+## 🚀 Key Features (For PPT Slides)
 
-*   **🔍 Intelligent Floor Plan Parsing**: Automatically extracts room layouts and wall geometries from images using OpenCV, with a robust **Gemini 2.0 Flash fallback** for complex plans.
-*   **🏗️ Structural Analysis**: Infers structural properties (load-bearing vs. partition walls) based on span lengths and spatial layout.
-*   **🧱 Material Recommendation Engine**: Recommends optimal construction materials (RCC, Steel, Brick, etc.) using a rule-based logic system.
-*   **💬 Engineering Explanations**: Generates clear, professional engineering reasoning for every material choice using LLM-powered insights (OpenRouter/Gemma).
-*   **📊 Interactive 3D Visualization**: Renders the complete structure in real-time using Plotly, allowing users to inspect the model phase-by-phase.
+### 1. 🔍 Vision-First Layout Extraction
+*   **Intelligent Parsing**: Converts JPG/PNG floor plans into precise boundary coordinates using OpenCV.
+*   **LLM Visual Fallback**: Utilizes **Gemini 1.5 Flash** to interpret complex, non-standard layouts where traditional CV detection is insufficient.
+*   **Spatial Awareness**: Automatically identifies and classifies room types (Bedroom, Kitchen, Living, etc.) based on dimensional logic.
+
+### 2. 🏗️ Autonomous Structural Analysis
+*   **Load-Bearing Inference**: Calculates span lengths and beam requirements based on floor plan geometry.
+*   **Smart Partitioning**: Differentiates between structural walls and partition walls.
+*   **Material Selection**: Executes a rule-based engine to assign specific materials (RCC, Steel, AAC Blocks) based on calculated structural demands.
+
+### 3. 💬 Engineering Intelligence (AI-Powered)
+*   **LLM Justification**: For every wall and room, SANCTUM generates professional engineering reasoning using **Google Gemma-3** (via OpenRouter).
+*   **Real-time Insights**: Provides predictive risk assessments and optimal mitigation strategies for specific wall segments.
+
+### 4. 🔗 Blockchain Integrity (Stellar Integration)
+*   **Soroban Smart Contracts**: Report hashes are stored on the **Stellar Testnet** using Rust-based Soroban contracts (WASM).
+*   **Project Immutability**: Every analysis is assigned a unique `Project ID` and hashed (SHA-256) to ensure the report hasn't been tampered with.
+*   **Live Verification**: Features a dedicated `/verify` endpoint and a frontend "Verify Now" button to pull live ledger data.
+
+### 5. 📊 Interactive 3D Visualization
+*   **Phase-by-Phase Rendering**: Users can autoplay through five distinct phases: Layout → Walls → Analysis → Materials → Final.
+*   **Dynamic 3D Plotly View**: Full 3D rotation and zoom-to-mesh interaction—click any room on the 3D model to see detailed modal reports.
+*   **Premium Glassmorphic UI**: High-contrast, dark-themed dashboard with real-time status badges and copy-to-clipboard functionality.
 
 ---
 
 ## 🏗️ System Architecture
 
-### 🔵 Backend (Python / Flask)
-*   `server.py`: The main REST API serving the `/analyze` endpoint with streaming support.
-*   `vision_parser.py`: Handles image processing (OpenCV) and layout extraction (Gemini Vision).
-*   `pipeline.py`: Orchestrates the flow from raw geometry to material selection and explanations.
-*   `materials.py`: Contains the core logic for structural assessment and material mapping.
-*   `explain.py`: Connects to LLM APIs to generate professional engineering justifications.
-*   `data.py`: Centralized schemas and fallback structural data.
+### 🔵 Backend (The Logic Core)
+*   **`server.py`**: Flask-based REST API with ND-JSON streaming for zero-latency UI updates.
+*   **`blockchain.py`**: Asynchronous integration layer for Stellar CLI and ledger commitment.
+*   **`pipeline.py` & `materials.py`**: The structural "brain" that calculates spans and matches material physics.
+*   **`vision_parser.py`**: Dual-layer detection (OpenCV + Gemini Vision).
 
-### 🎨 Frontend (HTML / CSS / JS)
-*   **Tech Stack**: Vanilla Javascript, CSS3 (Glassmorphism), Plotly.js for 3D rendering.
-*   **Location**: Hosted in the `/frontend` directory.
-*   **Features**: Drag-and-drop upload, real-time analysis streaming, interactive 3D viewer, and detailed results panel.
+### 🎨 Frontend (The User Experience)
+*   **Tech Stack**: Vanilla Javascript (Modern ES6+), Plotly.js, CSS Glassmorphism.
+*   **Interaction Model**: Drag-and-drop ingestion, Sidebar analysis drawer, and Modal detail view for 3D room objects.
 
 ---
 
-## 🛠️ Setup & Execution
+## 🛠️ Execution & Testing
 
-### 1. Install Dependencies
+### Installation
 ```bash
 pip install -r requirements.txt
+# Requirements: Flask, OpenCV, Plotly, Python-Dotenv, Requests
 ```
 
-### 2. Configure Environment
-Create a `.env` file with:
-```env
-GEMINI_API_KEY=your_key_here
-OPENROUTER_API_KEY=your_key_here
-```
-
-### 3. Run the Backend
-```bash
-python server.py
-# Running on http://localhost:5000
-```
-
-### 4. Run the Frontend
-```bash
-# From the root directory:
-python -m http.server 8000 --directory frontend
-# Access at http://localhost:8000
-```
+### Hosting & Monitoring
+1.  **Backend**: `python server.py` (Port 5000)
+2.  **Frontend**: `python -m http.server 8000` (Port 8000)
+3.  **Tests**: `python test_runner.py` (Automated suite for pipeline and blockchain endpoints).
 
 ---
 
-## 🔄 Data Pipeline Flow
-
-1.  **Input**: JPG/PNG Floor Plan or JSON Geometry.
-2.  **Vision**: Extract rooms and walls; classify rooms (Bedroom, Living, etc.).
-3.  **Analysis**: Calculate spans and loads; determine wall types.
-4.  **Intelligence**: Match materials to structural requirements and generate AI explanations.
-5.  **Output**: ND-JSON stream of phases (Layout → Walls → Analysis → Materials → Final).
+## 🎯 Project Impact (Closing Slide)
+*   **Efficiency**: Reduces manual CAD-to-Analysis workflow from hours to seconds.
+*   **Trust**: Guaranteed data integrity via decentralized ledger storage.
+*   **Insight**: Bridging the gap between 2D sketches and architectural 3D intelligence.
 
 ---
 
-## 🎯 Core Philosophy
-*"Build a system that not only recommends materials but also explains why, acting as a digital technical partner for engineers and architects."*
+## 📍 Environment Configuration
+*   **Blockchain**: Stellar Testnet
+*   **Contract Address**: `CDLIC3HMOLOBD5E3BZSKLENWZZ52LGUDW5YGFNWJHVAHZKK7XFIDHDDJ`
+*   **LLM Providers**: OpenRouter (Gemma-3), Google AI (Gemini 1.5 Flash).

@@ -267,7 +267,72 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="results-header">
                 <span class="data-summary">${result.rooms ? result.rooms.length : 0} active zones</span>
             </div>
+        `;
+        
+        if (result.blockchain) {
+            let bStatus = result.blockchain.status;
+            let statusIcon = '⏳ Pending...';
+            let statusClass = 'pending';
+            let trustMessage = '⏳ Awaiting blockchain confirmation';
             
+            if (bStatus === 'success' || bStatus === 'verified') {
+                statusIcon = '✅ Verified';
+                statusClass = 'success';
+                trustMessage = '✔ Verified structural analysis stored securely on blockchain';
+            } else if (bStatus === 'failed') {
+                statusIcon = '❌ Failed';
+                statusClass = 'failed';
+                trustMessage = '⚠ Blockchain verification unavailable';
+            }
+
+            let displayHash = result.report_hash ? result.report_hash.substring(0, 16) + '...' : 'N/A';
+            let projectId = result.blockchain.project_id || 'N/A';
+            let explorerHref = result.blockchain.explorer_link || '#';
+
+            html += `
+            <div class="blockchain-section">
+                <h3 class="data-section-title">Blockchain Verification</h3>
+                <div class="blockchain-card">
+                    <div class="bc-row">
+                        <span class="bc-label">Status</span>
+                        <span class="bc-value status-badge ${statusClass}" id="ui-bc-status">${statusIcon}</span>
+                    </div>
+                    <div class="trust-message" id="ui-bc-trust">${trustMessage}</div>
+                    <div class="bc-row">
+                        <span class="bc-label">Project ID</span>
+                        <span class="bc-value">${projectId}</span>
+                    </div>
+                    <div class="bc-row">
+                        <span class="bc-label">Report Hash</span>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span class="bc-value monospace" id="ui-bc-hash" title="${result.report_hash}">${displayHash}</span>
+                            <button id="btn-copy-hash" style="background:none; border:none; cursor:pointer; color:var(--color-outline); display:flex; align-items:center; justify-content:center; padding:2px; transition:color 0.2s;" onmouseover="this.style.color='var(--color-primary)'" onmouseout="this.style.color='var(--color-outline)'" title="Copy to clipboard">
+                                <span class="material-symbols-outlined" style="font-size:14px;">content_copy</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="bc-row">
+                        <span class="bc-label">Explorer</span>
+                        <a href="${explorerHref}" target="_blank" class="bc-link">View on Stellar Expert</a>
+                    </div>
+                    <button class="verify-btn" id="btn-verify-hash" data-pid="${projectId}">
+                        Verify Now
+                    </button>
+                </div>
+            </div>
+            `;
+        } else {
+            html += `
+            <div class="blockchain-section">
+                <h3 class="data-section-title">Blockchain Verification</h3>
+                <div class="blockchain-card">
+                    <span class="bc-value" style="display:block; text-align:center;">Not Available</span>
+                </div>
+            </div>
+            `;
+        }
+        
+        html += `
             <div class="data-section">
                 <h3 class="data-section-title">Rooms</h3>
         `;
@@ -348,6 +413,70 @@ document.addEventListener('DOMContentLoaded', () => {
         
         html += `</div>`; // Close data-section
         analysisResults.innerHTML = html;
+        
+        const btnVerify = document.getElementById('btn-verify-hash');
+        if (btnVerify) {
+            btnVerify.addEventListener('click', async () => {
+                const pid = btnVerify.dataset.pid;
+                const statusBadge = document.getElementById('ui-bc-status');
+                const hashDisplay = document.getElementById('ui-bc-hash');
+                const originalText = btnVerify.textContent;
+                
+                btnVerify.textContent = 'Verifying...';
+                btnVerify.disabled = true;
+                
+                try {
+                    const res = await fetch(`http://localhost:5000/verify/${pid}`);
+                    const data = await res.json();
+                    
+                    const trustMsg = document.getElementById('ui-bc-trust');
+                    if (data.status === 'verified') {
+                        statusBadge.textContent = '✅ Verified';
+                        statusBadge.className = 'bc-value status-badge success pop';
+                        setTimeout(() => statusBadge.classList.remove('pop'), 300);
+                        if (trustMsg) trustMsg.textContent = '✔ Verified structural analysis stored securely on blockchain';
+                        hashDisplay.textContent = data.stored_hash.substring(0, 16) + '...';
+                        hashDisplay.title = data.stored_hash;
+                        btnVerify.textContent = 'Verified!';
+                    } else {
+                        statusBadge.textContent = '❌ Failed';
+                        statusBadge.className = 'bc-value status-badge failed';
+                        if (trustMsg) trustMsg.textContent = '⚠ Blockchain verification unavailable';
+                        btnVerify.textContent = originalText;
+                        btnVerify.disabled = false;
+                        alert('Verification Error: ' + (data.error || 'Hash not found'));
+                    }
+                } catch(e) {
+                    btnVerify.textContent = originalText;
+                    btnVerify.disabled = false;
+                    alert('Network error during verification');
+                }
+            });
+            
+            if (result.blockchain && result.blockchain.status === 'pending') {
+                setTimeout(() => {
+                    if (!btnVerify.disabled && btnVerify.textContent.trim() === 'Verify Now') {
+                        btnVerify.click();
+                    }
+                }, 3000);
+            }
+        }
+        
+        const btnCopy = document.getElementById('btn-copy-hash');
+        if (btnCopy) {
+            btnCopy.addEventListener('click', () => {
+                const hashSpan = document.getElementById('ui-bc-hash');
+                const fullHash = hashSpan.title;
+                if (fullHash && fullHash !== 'N/A' && fullHash !== 'undefined') {
+                    navigator.clipboard.writeText(fullHash);
+                    const originalHtml = btnCopy.innerHTML;
+                    btnCopy.innerHTML = '<span style="font-size:10px; color:#00D9A5; font-weight:bold; padding:2px;">Copied!</span>';
+                    setTimeout(() => {
+                        btnCopy.innerHTML = originalHtml;
+                    }, 2000);
+                }
+            });
+        }
     }
 
     function updateStatus(text, ready) {

@@ -1,115 +1,74 @@
-🧠 Project Overview
-We are building an AI-based Structural Intelligence System that:
+# 🧠 SANCTUM AI — Structural Intelligence System
 
-Takes floor plan data (currently hardcoded)
+SANCTUM AI is an end-to-end structural analysis platform that transforms 2D floor plans into intelligent, material-optimized 3D models. It combines computer vision, engineering logic, and generative AI to provide clear, actionable construction insights.
 
-Converts it into structured geometry (rooms + walls)
+---
 
-Generates a 3D model of the structure
+## 🚀 Key Features
 
-Recommends construction materials
+*   **🔍 Intelligent Floor Plan Parsing**: Automatically extracts room layouts and wall geometries from images using OpenCV, with a robust **Gemini 2.0 Flash fallback** for complex plans.
+*   **🏗️ Structural Analysis**: Infers structural properties (load-bearing vs. partition walls) based on span lengths and spatial layout.
+*   **🧱 Material Recommendation Engine**: Recommends optimal construction materials (RCC, Steel, Brick, etc.) using a rule-based logic system.
+*   **💬 Engineering Explanations**: Generates clear, professional engineering reasoning for every material choice using LLM-powered insights (OpenRouter/Gemma).
+*   **📊 Interactive 3D Visualization**: Renders the complete structure in real-time using Plotly, allowing users to inspect the model phase-by-phase.
 
-Provides clear engineering explanations for decisions
+---
 
-🏗️ Current Architecture
-🔁 Pipeline
-Floor Plan Data → Geometry → Material Logic → Explanation → 3D Visualization
-👥 Team Structure
-🎨 B (Frontend / Visualization)
-Responsible for 3D rendering using Plotly
+## 🏗️ System Architecture
 
-Displays rooms in 3D space
+### 🔵 Backend (Python / Flask)
+*   `server.py`: The main REST API serving the `/analyze` endpoint with streaming support.
+*   `vision_parser.py`: Handles image processing (OpenCV) and layout extraction (Gemini Vision).
+*   `pipeline.py`: Orchestrates the flow from raw geometry to material selection and explanations.
+*   `materials.py`: Contains the core logic for structural assessment and material mapping.
+*   `explain.py`: Connects to LLM APIs to generate professional engineering justifications.
+*   `data.py`: Centralized schemas and fallback structural data.
 
-Handles demo and presentation
+### 🎨 Frontend (HTML / CSS / JS)
+*   **Tech Stack**: Vanilla Javascript, CSS3 (Glassmorphism), Plotly.js for 3D rendering.
+*   **Location**: Hosted in the `/frontend` directory.
+*   **Features**: Drag-and-drop upload, real-time analysis streaming, interactive 3D viewer, and detailed results panel.
 
-👨‍💻 A (Backend) split into:
-🔵 X (Structure + Pipeline)
-Creates data.py (rooms + walls)
+---
 
-Builds app.py (main pipeline)
+## 🛠️ Setup & Execution
 
-Structures output for frontend
+### 1. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
 
-🟣 Y (Logic + Intelligence)
-Builds materials.py (material recommendation)
+### 2. Configure Environment
+Create a `.env` file with:
+```env
+GEMINI_API_KEY=your_key_here
+OPENROUTER_API_KEY=your_key_here
+```
 
-Builds explain.py (engineering reasoning)
+### 3. Run the Backend
+```bash
+python server.py
+# Running on http://localhost:5000
+```
 
-Improves decision logic
+### 4. Run the Frontend
+```bash
+# From the root directory:
+python -m http.server 8000 --directory frontend
+# Access at http://localhost:8000
+```
 
-📁 Project Structure
-project/
-│
-├── data.py          # room + wall definitions
-├── materials.py     # material selection logic
-├── explain.py       # explanation generator
-├── app.py           # main pipeline
-├── model3d.py       # 3D visualization (frontend)
-⚙️ Current Implementation Status
-✅ Backend
-Hardcoded room + wall data
+---
 
-Rule-based material recommendation:
+## 🔄 Data Pipeline Flow
 
-load_bearing → RCC
+1.  **Input**: JPG/PNG Floor Plan or JSON Geometry.
+2.  **Vision**: Extract rooms and walls; classify rooms (Bedroom, Living, etc.).
+3.  **Analysis**: Calculate spans and loads; determine wall types.
+4.  **Intelligence**: Match materials to structural requirements and generate AI explanations.
+5.  **Output**: ND-JSON stream of phases (Layout → Walls → Analysis → Materials → Final).
 
-long span → Steel
+---
 
-otherwise → Brick
-
-Explanation system working
-
-✅ Frontend
-Plotly 3D rendering working
-
-Can display one or more rooms
-
-Labels added (room names)
-
-🔄 Data Flow Between Backend & Frontend
-Backend outputs:
-
-{
-  "rooms": [...],
-  "walls": [...],
-  "results": [
-    {
-      "wall": {...},
-      "material": "...",
-      "explanation": "..."
-    }
-  ]
-}
-Frontend uses:
-
-rooms → for 3D rendering
-
-🎯 Key Features
-End-to-end working pipeline (even if simplified)
-
-Explainable AI decisions (important for judging)
-
-Modular architecture (easy to extend)
-
-🚧 Future Improvements (Planned)
-OpenCV-based floor plan parsing
-
-Better structural validation
-
-Cost optimization
-
-Real-time interaction
-
-⚠️ Constraints
-Time limit: 5 hours initial prototype
-
-Focus: working system > perfect system
-
-Avoid heavy ML or complex setups
-
-🧠 Core Idea
-“Build a system that not only recommends materials but also explains why, like a real engineer.”
-
-🎤 Demo Narrative
-“We convert floor plan data into a 3D structure, analyze wall properties, recommend materials based on engineering rules, and explain each decision clearly.”
-
+## 🎯 Core Philosophy
+*"Build a system that not only recommends materials but also explains why, acting as a digital technical partner for engineers and architects."*

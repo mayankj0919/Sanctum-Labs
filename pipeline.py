@@ -9,12 +9,33 @@ import webbrowser
 from pathlib import Path
 import json
 import time
+import hashlib
 
 from loader import load_data
 from materials import recommend_material, calculate_risk_score
 from explain import explain as generate_explanation
 from formatter import print_report, write_json
 from render_rooms import render_rooms as render_3d, generate_plotly_json
+
+
+def generate_report_hash(report: dict) -> str:
+    """Generate SHA256 hash of the report dictionary.
+    
+    Parameters
+    ----------
+    report : dict
+        Structural analysis report dictionary
+        
+    Returns
+    -------
+    str
+        SHA256 hex digest
+    """
+    # Use sort_keys for deterministic JSON output
+    report_json = json.dumps(report, sort_keys=True, default=str)
+    report_hash = hashlib.sha256(report_json.encode()).hexdigest()
+    print("Report hash generated:", report_hash)
+    return report_hash
 
 
 def adapt_wall(wall: dict) -> dict:
@@ -123,6 +144,8 @@ def run_pipeline(
         "phases": phases,
         "diagram": fig_phase_5,
     }
+    
+    report["report_hash"] = generate_report_hash(report)
 
     print_report(report)
     write_json(report, output_path)
@@ -198,5 +221,7 @@ def generate_phases_stream(data_dict: dict):
         "results": results,
         "room_scores": room_scores
     }
+    
+    report["report_hash"] = generate_report_hash(report)
     
     yield json.dumps(report) + "\n"

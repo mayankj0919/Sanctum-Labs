@@ -1029,6 +1029,132 @@ body {
     color: var(--bg-surface);
 }
 
+/* Blockchain Verification Panel Elements */
+.blockchain-section {
+    margin-bottom: 24px;
+}
+
+.blockchain-card {
+    background: rgba(31, 31, 36, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.bc-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    padding-bottom: 8px;
+}
+
+.bc-row:last-of-type {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.bc-label {
+    font-size: 11px;
+    color: var(--color-outline);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
+.bc-value {
+    font-size: 13px;
+    color: var(--color-on-surface);
+    font-weight: 500;
+}
+
+.bc-value.monospace {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-primary);
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+    display: inline-block;
+    transform: scale(1);
+}
+
+.status-badge.pop {
+    transform: scale(1.05);
+}
+
+.status-badge.pending {
+    background: rgba(255, 184, 0, 0.1);
+    color: #FFB800;
+}
+
+.status-badge.success {
+    background: rgba(0, 217, 165, 0.1);
+    color: #00D9A5;
+}
+
+.status-badge.failed {
+    background: rgba(255, 71, 87, 0.1);
+    color: #FF4757;
+}
+
+.trust-message {
+    font-size: 10px;
+    color: var(--color-outline);
+    font-style: italic;
+    margin-top: -4px;
+    text-align: right;
+    letter-spacing: 0.02em;
+}
+
+.bc-link {
+    color: var(--color-secondary);
+    font-size: 11px;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.bc-link:hover {
+    text-decoration: underline;
+}
+
+.verify-btn {
+    margin-top: 8px;
+    width: 100%;
+    padding: 12px;
+    background: var(--color-primary-container);
+    color: var(--color-on-primary-container);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-headline);
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.verify-btn:hover:not(:disabled) {
+    background: var(--color-tertiary-container);
+}
+
+.verify-btn:disabled {
+    background: var(--bg-surface-container-high);
+    color: var(--color-outline);
+    cursor: not-allowed;
+}
+
 /* Responsive */
 @media (max-width: 1280px) {
     .analysis-panel {
